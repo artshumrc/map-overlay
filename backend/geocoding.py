@@ -20,7 +20,13 @@ async def geocode_address(
         data = resp.json()
 
     if data["status"] != "OK" or not data["results"]:
-        raise ValueError(f"Geocoding failed for '{address}': {data['status']}")
+        status = data.get("status", "UNKNOWN_ERROR")
+        error_message = data.get("error_message")
+        if error_message:
+            raise ValueError(
+                f"Geocoding failed for '{address}': {status} - {error_message}"
+            )
+        raise ValueError(f"Geocoding failed for '{address}': {status}")
 
     result = data["results"][0]
     loc = result["geometry"]["location"]
@@ -32,9 +38,7 @@ async def geocode_address(
     }
 
 
-async def geocode_entries(
-    entries: list[dict], api_key: str
-) -> list[dict]:
+async def geocode_entries(entries: list[dict], api_key: str) -> list[dict]:
     """Geocode a list of address entries concurrently with rate limiting.
     Each entry is {address, title, description}."""
     async with httpx.AsyncClient(timeout=30.0) as client:

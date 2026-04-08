@@ -37,7 +37,10 @@ MAP_ID_RE = re.compile(r"^[a-f0-9]{10}$")
 def get_api_key() -> str:
     key = os.getenv("GOOGLE_API_KEY")
     if not key or key == "your-google-api-key-here":
-        raise HTTPException(status_code=500, detail="Google API key not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="Google API key not configured. Set GOOGLE_API_KEY.",
+        )
     return key
 
 
@@ -86,8 +89,11 @@ async def upload_map(file: UploadFile = File(...)):
 @app.post("/api/geocode")
 async def geocode_single(input: AddressInput):
     api_key = get_api_key()
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        result = await geocode_address(client, input.address, api_key)
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            result = await geocode_address(client, input.address, api_key)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return result
 
 
