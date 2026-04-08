@@ -56,6 +56,9 @@ docker compose up -d --build
 
 The app will be available at http://localhost:8000.
 
+Local Docker runs default to HTTP basic auth credentials `admin` / `password`.
+Override them by exporting `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`, or by adding them to your local `.env` before starting Compose.
+
 ## Usage
 
 1. **Upload** a historical map image

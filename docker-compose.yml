@@ -1,13 +1,26 @@
 services:
   map-overlay:
     build: .
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env
     volumes:
       - uploads:/app/static/uploads
       - saved:/app/static/saved
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    depends_on:
+      - map-overlay
+    environment:
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-admin}
+      BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-password}
+    ports:
+      - "8000:80"
     restart: unless-stopped
 
 volumes:
