@@ -12,7 +12,12 @@ from fastapi.templating import Jinja2Templates
 from PIL import Image
 
 from backend.geocoding import geocode_address, geocode_entries, parse_csv_addresses
-from backend.models import AddressInput, TransformRequest, TransformResponse, TransformedPoint
+from backend.models import (
+    AddressInput,
+    TransformRequest,
+    TransformResponse,
+    TransformedPoint,
+)
 from backend.transform import apply_transform, compute_affine_coefficients
 
 load_dotenv()
@@ -45,14 +50,19 @@ def validate_map_id(map_id: str) -> str:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     api_key = os.getenv("GOOGLE_API_KEY", "")
-    return templates.TemplateResponse("index.html", {"request": request, "api_key": api_key})
+    return templates.TemplateResponse(
+        request=request, name="index.html", context={"api_key": api_key}
+    )
 
 
 @app.post("/api/upload-map")
 async def upload_map(file: UploadFile = File(...)):
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type {ext} not allowed. Use JPG, PNG, GIF, or WebP.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type {ext} not allowed. Use JPG, PNG, GIF, or WebP.",
+        )
 
     content = await file.read()
     if len(content) > MAX_UPLOAD_SIZE:
@@ -109,14 +119,16 @@ async def transform(req: TransformRequest):
     points = []
     for loc in req.locations:
         px, py = apply_transform(coeffs, loc.lat, loc.lng)
-        points.append(TransformedPoint(
-            address=loc.address,
-            formatted_address=loc.formatted_address,
-            lat=loc.lat,
-            lng=loc.lng,
-            px=px,
-            py=py,
-        ))
+        points.append(
+            TransformedPoint(
+                address=loc.address,
+                formatted_address=loc.formatted_address,
+                lat=loc.lat,
+                lng=loc.lng,
+                px=px,
+                py=py,
+            )
+        )
 
     return TransformResponse(
         points=points,
@@ -159,4 +171,6 @@ async def view_map(request: Request, map_id: str):
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Map not found")
 
-    return templates.TemplateResponse("view.html", {"request": request, "map_id": map_id})
+    return templates.TemplateResponse(
+        request=request, name="view.html", context={"map_id": map_id}
+    )
